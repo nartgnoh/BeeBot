@@ -1,0 +1,9 @@
+- a timed events function
+- an add to timed events function
+- for music bot: change volume
+- for music bot: next
+- add an insult function
+- fix the "pickgame" fairness
+- role specific security
+- repeat previous command
+- "next" command have reaction voting
