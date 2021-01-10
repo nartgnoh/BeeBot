@@ -40,7 +40,7 @@ client = discord.Client(intents=intents)
 # parent directory
 parent_dir = r'C:\Users\Hong Tran\Python\BeeBot'
 # create new "yt_links.txt" file on run
-yt_links_file = open("Code_files/music_bot_files/yt_links.txt", "w")
+yt_links_file = open("resource_files/music_bot_files/yt_links.txt", "w")
 
 # bot prefix
 bot = commands.Bot(command_prefix='BB ')
@@ -63,7 +63,7 @@ async def pick_game(ctx, number_of_players: Optional[int]):
         # fix for the full "GameName" not showing up
         pd.set_option('display.max_colwidth', -1)
         # accessing GamesList_copy.xlsx
-        games_file = pd.read_excel(r'{}\Code_files\Excel_files\GameList_copy.xlsx'.format(parent_dir))
+        games_file = pd.read_excel(r'{}\resource_files\excel_files\game_list_copy.xlsx'.format(parent_dir))
         games_file_df = pd.DataFrame(games_file, columns=['GameName', 'PlayerNumMIN', 'PlayerNumMAX'])
 
         # calculating "player_range"
@@ -115,13 +115,13 @@ async def add_game(ctx, game_name: Optional[str], min_players: Optional[int], ma
                                          'PlayerNumMAX': [max_players]})
 
                 # adding game info to "GameList_copy.xlsx" file
-                gl_writer = pd.ExcelWriter('GameList_copy.xlsx', engine='openpyxl')
+                gl_writer = pd.ExcelWriter('game_list_copy.xlsx', engine='openpyxl')
                 # try to open an existing workbook
-                gl_writer.book = load_workbook('Code_files\Excel_files\GameList_copy.xlsx')
+                gl_writer.book = load_workbook('resource_files\excel_files\game_list_copy.xlsx')
                 # copy existing sheets
                 gl_writer.sheets = dict((ws.title, ws) for ws in gl_writer.book.worksheets)
                 # read existing file
-                gl_reader = pd.read_excel(r'Code_files\Excel_files\GameList_copy.xlsx')
+                gl_reader = pd.read_excel(r'resource_files\excel_files\game_list_copy.xlsx')
                 # write out the new sheet
                 new_data.to_excel(gl_writer, index=False, header=False, startrow=len(gl_reader) + 1)
                 gl_writer.close()
@@ -143,46 +143,46 @@ async def split_team(ctx, number_of_teams: Optional[int]):
     players_array = []
     teams_array = []
     final_message = ''
-    # try:
-    # set "number_of_teams" to 1 if none
-    if number_of_teams == None:
-        number_of_teams = 1
-    if number_of_teams <= max_teams:
-        # create a "players_array" for members in the voice channel
-        channel = ctx.message.author.voice.channel
-        for member in channel.members:
-            count_members += 1
-            user = member.display_name
-            players_array.append(user)
-        # randomize the elements of the array 1 to "count_members" times
-        for i in range(random.randint(1, count_members)):
-            random.shuffle(players_array)
+    try:
+        # set "number_of_teams" to 1 if none
+        if number_of_teams == None:
+            number_of_teams = 1
+        if number_of_teams <= max_teams:
+            # create a "players_array" for members in the voice channel
+            channel = ctx.message.author.voice.channel
+            for member in channel.members:
+                count_members += 1
+                user = member.display_name
+                players_array.append(user)
+            # randomize the elements of the array 1 to "count_members" times
+            for i in range(random.randint(1, count_members)):
+                random.shuffle(players_array)
 
-        # split the teams into the number of teams
-        team_splitting = np.array_split(players_array, number_of_teams)
+            # split the teams into the number of teams
+            team_splitting = np.array_split(players_array, number_of_teams)
 
-        # create a "team_array" for the split teams
-        for i in range(len(team_splitting)):
-            # checking empty
-            # if team_splitting[i]:
-            quote_players = ''
-            for j in range(len(team_splitting[i])):
-                if team_splitting[i][j]:
-                    quote_players = quote_players + '{}, '.format(team_splitting[i][j])
-            teams_array.append(quote_players)
+            # create a "team_array" for the split teams
+            for i in range(len(team_splitting)):
+                # checking empty
+                # if team_splitting[i]:
+                quote_players = ''
+                for j in range(len(team_splitting[i])):
+                    if team_splitting[i][j]:
+                        quote_players = quote_players + '{}, '.format(team_splitting[i][j])
+                teams_array.append(quote_players)
 
-        # create a "final_message" with all the teams
-        for teams in range(len(teams_array)):
-            team_number += 1
-            # check if element is not empty
-            if teams_array[teams]:
-                final_message = final_message + 'Team {} :  {}\n'.format(team_number, teams_array[teams][:-2])
+            # create a "final_message" with all the teams
+            for teams in range(len(teams_array)):
+                team_number += 1
+                # check if element is not empty
+                if teams_array[teams]:
+                    final_message = final_message + 'Team {} :  {}\n'.format(team_number, teams_array[teams][:-2])
 
-        await ctx.send('The teams are : \n{}'.format(final_message))
-    else:
-        await ctx.send('Too many teams! :confounded: Please try again!')
-    # except:
-    #     await ctx.send('An error has occurred! :confounded: Please try again!')
+            await ctx.send('The teams are : \n{}'.format(final_message))
+        else:
+            await ctx.send('Too many teams! :confounded: Please try again!')
+    except:
+        await ctx.send('An error has occurred! :confounded: Please try again!')
 
 
 # bot command to add suggestions for BeeBot
@@ -193,7 +193,7 @@ async def feature_suggest(ctx, *, suggestion: Optional[str]):
     if suggestion == None:
         await ctx.send('Please include a suggestion! :smile:')
     else:
-        suggest_file = open("Code_files/Text_files/suggestions_for_bot.txt", "a")
+        suggest_file = open("resource_files/text_files/suggestions_for_bot.txt", "a")
         suggest_file.write('- ' + suggestion + '\n')
         suggest_file.close()
         await ctx.send('Your suggestion has been added to the list! :face_with_monocle:')
@@ -220,9 +220,9 @@ async def colour(ctx):
 
 
 # bot command to show cute angry pictures
-@bot.command(name='angry', aliases=['angy', 'mad'], help='BeeBot angry! >:c')
+@bot.command(name='angry', aliases=['angy', 'mad', 'hmph'], help='BeeBot angry! >:c')
 async def angry(ctx):
-    img_path = parent_dir + r'\Code_files\Image_files\angry_images'
+    img_path = parent_dir + r'\resource_files\image_files\angry_images'
     angry_images = random.choice([
         x for x in os.listdir(img_path)
         if os.path.isfile(os.path.join(img_path, x))
@@ -233,12 +233,13 @@ async def angry(ctx):
         'Wat you looking at?',
         'How dare you.',
         'Hmph.',
-        'I will attack.'
+        'I will attack.',
+        'I\'m so done.'
     ]
     angry_message = random.choice(angry_quotes)
 
     await ctx.send('{}'.format(angry_message),
-                   file=discord.File('Code_files/Image_files/angry_images/{}'.format(angry_images)))
+                   file=discord.File('resource_files/image_files/angry_images/{}'.format(angry_images)))
 
 
 # bot command to wish someone a Happy Birthday
@@ -307,10 +308,10 @@ async def play(ctx, *, yt_search_or_link: Optional[str]):
                 yt_search_or_link = 'https://www.youtube.com/watch?v=' + yt_id
 
             # append "url_link" to "yt_links" file
-            add_yt_links_file = open("Code_files/music_bot_files/yt_links.txt", "a")
+            add_yt_links_file = open("resource_files/music_bot_files/yt_links.txt", "a")
             add_yt_links_file.write('\n' + yt_search_or_link)
             add_yt_links_file.close()
-            open_yt_links_file = open("Code_files/music_bot_files/yt_links.txt")
+            open_yt_links_file = open("resource_files/music_bot_files/yt_links.txt")
 
             # get_url function
             url = get_url()
@@ -330,7 +331,7 @@ async def play(ctx, *, yt_search_or_link: Optional[str]):
                                    ':musical_note:'.format(message_now_playing(url)))
                     # call "download_song" function
                     download_song(ctx)
-                    voice.play(discord.FFmpegPCMAudio("Code_files/music_bot_files/song.mp3"),
+                    voice.play(discord.FFmpegPCMAudio("resource_files/music_bot_files/song.mp3"),
                                after=lambda e: download_song(ctx))
                     voice.is_playing()
                 else:
@@ -348,7 +349,7 @@ async def next(ctx):
     try:
         voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
         # check if the queue is empty
-        fl_check = Path(r'{}\Code_files\music_bot_files\yt_links.txt'.format(parent_dir))
+        fl_check = Path(r'{}\resource_files\music_bot_files\yt_links.txt'.format(parent_dir))
         if not fl_check.stat().st_size == 0:
             # check if voice is playing
             if not voice.is_playing:
@@ -376,8 +377,8 @@ async def next(ctx):
 async def leave(ctx):
     voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
     if voice.is_connected():
-        new_yt_links_file = open("Code_files/music_bot_files/yt_links.txt", "w")
-        yt_current_file = open("Code_files/music_bot_files/yt_current.txt", "w")
+        new_yt_links_file = open("resource_files/music_bot_files/yt_links.txt", "w")
+        yt_current_file = open("resource_files/music_bot_files/yt_current.txt", "w")
         await ctx.send("Ok I'll leave. :cry:")
         voice.stop()
         await voice.disconnect()
@@ -416,7 +417,7 @@ async def resume(ctx):
              help='♫ View the current audio! ♫')
 async def view_current(ctx):
     try:
-        yt_current_file = open("Code_files/music_bot_files/yt_current.txt")
+        yt_current_file = open("resource_files/music_bot_files/yt_current.txt")
         read_file = yt_current_file.readline()
         message = message_now_playing(read_file)
         await ctx.send(':musical_note:  BeeBot is currently playing ***{}!***  '
@@ -430,7 +431,7 @@ async def view_current(ctx):
              help='♫ View the current queue! ♫')
 async def current_queue(ctx):
     # order of use
-    new_yt_links_file = open("Code_files/music_bot_files/yt_links.txt")
+    new_yt_links_file = open("resource_files/music_bot_files/yt_links.txt")
     new_yt_links_file.flush()
     count = 0
     title_count = 0
@@ -450,15 +451,15 @@ async def current_queue(ctx):
                 count += 1
 
             # check if "yt_links.txt" is empty
-            fl_check = Path(r'{}\Code_files\music_bot_files\yt_links.txt'.format(parent_dir))
+            fl_check = Path(r'{}\resource_files\music_bot_files\yt_links.txt'.format(parent_dir))
             if not fl_check.stat().st_size == 0:
                 # pop initial "\n"
-                fl_check = open('Code_files/music_bot_files/yt_links.txt').readlines()
+                fl_check = open('resource_files/music_bot_files/yt_links.txt').readlines()
                 if fl_check[0] == '\n' or fl_check[0] == '':
                     queue_array.pop(0)
             # add current song
             if voice.is_playing:
-                yt_current_file = open("Code_files/music_bot_files/yt_current.txt")
+                yt_current_file = open("resource_files/music_bot_files/yt_current.txt")
                 yt_current_file.flush()
                 current_audio = yt_current_file.readline()
                 queue_array.insert(0, current_audio)
@@ -491,16 +492,16 @@ async def current_queue(ctx):
 async def view_next(ctx):
     try:
         key = 0
-        next_yt_links_file = open("Code_files/music_bot_files/yt_links.txt")
+        next_yt_links_file = open("resource_files/music_bot_files/yt_links.txt")
         # read first line
-        first_line = open('Code_files/music_bot_files/yt_links.txt').readlines()
+        first_line = open('resource_files/music_bot_files/yt_links.txt').readlines()
         # delete if it is a "\n"
         if first_line[key] == '\n':
-            lines = open('Code_files/music_bot_files/yt_links.txt').readlines()
-            with open('Code_files/music_bot_files/yt_links.txt', 'w') as f:
+            lines = open('resource_files/music_bot_files/yt_links.txt').readlines()
+            with open('resource_files/music_bot_files/yt_links.txt', 'w') as f:
                 f.writelines(lines[1:])
         next_yt_links_file.flush()
-        first_line = open('Code_files/music_bot_files/yt_links.txt').readlines()
+        first_line = open('resource_files/music_bot_files/yt_links.txt').readlines()
         # send message
         message = message_now_playing(first_line[key])
         await ctx.send(':musical_note:  BeeBot will be ***{}*** next!'
@@ -535,22 +536,22 @@ def message_now_playing(url):
 def download_song(ctx):
     try:
         url = get_url()
-        yt_current_file = open("Code_files/music_bot_files/yt_current.txt", "w")
+        yt_current_file = open("resource_files/music_bot_files/yt_current.txt", "w")
         yt_current_file.write(url)
 
         try:
             # delete first elements from "yt_links" file
-            delete_yt_links_file = open("Code_files/music_bot_files/yt_links.txt")
-            first_line = open('Code_files/music_bot_files/yt_links.txt').readlines()
+            delete_yt_links_file = open("resource_files/music_bot_files/yt_links.txt")
+            first_line = open('resource_files/music_bot_files/yt_links.txt').readlines()
             # also delete the '\n' if present
             if first_line[0] == '\n':
-                lines = open('Code_files/music_bot_files/yt_links.txt').readlines()
-                with open('Code_files/music_bot_files/yt_links.txt', 'w') as f:
+                lines = open('resource_files/music_bot_files/yt_links.txt').readlines()
+                with open('resource_files/music_bot_files/yt_links.txt', 'w') as f:
                     f.writelines(lines[1:])
                 # refresh file
                 delete_yt_links_file.flush()
-            lines = open('Code_files/music_bot_files/yt_links.txt').readlines()
-            with open('Code_files/music_bot_files/yt_links.txt', 'w') as f:
+            lines = open('resource_files/music_bot_files/yt_links.txt').readlines()
+            with open('resource_files/music_bot_files/yt_links.txt', 'w') as f:
                 f.writelines(lines[1:])
             # refresh file
             delete_yt_links_file.flush()
@@ -558,11 +559,11 @@ def download_song(ctx):
             print('nothing left in yt_links.txt file')
 
         # create song file
-        song_there = os.path.isfile("Code_files/music_bot_files/song.mp3")
+        song_there = os.path.isfile("resource_files/music_bot_files/song.mp3")
         try:
             # remove "song.mp3" file
             if song_there:
-                os.remove("Code_files/music_bot_files/song.mp3")
+                os.remove("resource_files/music_bot_files/song.mp3")
         except PermissionError:
             print('Error has occurred in \"download_song\" function at song_there!')
 
@@ -579,7 +580,7 @@ def download_song(ctx):
             ydl.download([url])
         for file in os.listdir("./"):
             if file.endswith(".mp3"):
-                os.rename(file, "Code_files/music_bot_files/song.mp3")
+                os.rename(file, "resource_files/music_bot_files/song.mp3")
 
         # calling this "download_song" function again to play next song
         voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
@@ -594,15 +595,15 @@ def download_song(ctx):
 def download_next_song(ctx):
     try:
         url = get_url()
-        yt_current_file = open("Code_files/music_bot_files/yt_current.txt", "w")
+        yt_current_file = open("resource_files/music_bot_files/yt_current.txt", "w")
         yt_current_file.write(url)
 
         # create song file
-        song_there = os.path.isfile("Code_files/music_bot_files/next_song.mp3")
+        song_there = os.path.isfile("resource_files/music_bot_files/next_song.mp3")
         try:
             # remove "song.mp3" file
             if song_there:
-                os.remove("Code_files/music_bot_files/next_song.mp3")
+                os.remove("resource_files/music_bot_files/next_song.mp3")
         except PermissionError:
             print('Error has occurred in \"download_next_song\" function at song_there!')
 
@@ -619,7 +620,7 @@ def download_next_song(ctx):
             ydl.download([url])
         for file in os.listdir("./"):
             if file.endswith(".mp3"):
-                os.rename(file, "Code_files/music_bot_files/next_song.mp3")
+                os.rename(file, "resource_files/music_bot_files/next_song.mp3")
 
         # calling this "download_song" function again to play next song
         voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
@@ -632,18 +633,18 @@ def download_next_song(ctx):
 
 # function to get_url from "yt_links.txt" file
 def get_url():
-    delete_yt_links_file = open("Code_files/music_bot_files/yt_links.txt")
-    first_line = open('Code_files/music_bot_files/yt_links.txt').readlines()
+    delete_yt_links_file = open("resource_files/music_bot_files/yt_links.txt")
+    first_line = open('resource_files/music_bot_files/yt_links.txt').readlines()
     # also delete the '\n' if present
     if first_line[0] == '\n':
-        lines = open('Code_files/music_bot_files/yt_links.txt').readlines()
-        with open('Code_files/music_bot_files/yt_links.txt', 'w') as f:
+        lines = open('resource_files/music_bot_files/yt_links.txt').readlines()
+        with open('resource_files/music_bot_files/yt_links.txt', 'w') as f:
             f.writelines(lines[1:])
         # refresh file
         delete_yt_links_file.flush()
 
     # read first line in "yt_links.txt" file
-    fl_yt_links_file = open("Code_files/music_bot_files/yt_links.txt")
+    fl_yt_links_file = open("resource_files/music_bot_files/yt_links.txt")
     # reload txt file
     fl_yt_links_file.flush()
     new_url = fl_yt_links_file.readline()
@@ -654,28 +655,27 @@ def get_url():
     return url
 
 
-# does not work c:
-async def count_reactions(message):
-    channel = message.channel
-    choices = {"🇦": "Solos",
-               "🇧": "Duos",
-               "🇨": "Squads"}
-
-    vote = discord.Embed(title="**[POLL]**", description=" ", color=0x00ff00)
-    value = "\n".join("- {} {}".format(*item) for item in choices.items())
-    vote.add_field(name="Please vote for the match type:", value=value, inline=True)
-
-    message_1 = await bot.send_message(channel, embed=vote)
-
-    for choice in choices:
-        await bot.add_reaction(message_1, choice)
-
-    await asyncio.sleep(60)  # wait for one minute
-    message_1 = await bot.get_message(channel, message_1.id)
-
-    counts = {react.emoji: react.count for react in message_1.reactions}
-
-    return
+# # does not work c:
+# async def count_reactions(message):
+#     channel = message.channel
+#     choices = {"🇦": "Solos",
+#                "🇧": "Duos",
+#                "🇨": "Squads"}
+#
+#     vote = discord.Embed(title="**[POLL]**", description=" ", color=0x00ff00)
+#     value = "\n".join("- {} {}".format(*item) for item in choices.items())
+#     vote.add_field(name="Please vote for the match type:", value=value, inline=True)
+#
+#     message_1 = await bot.send_message(channel, embed=vote)
+#
+#     for choice in choices:
+#         await bot.add_reaction(message_1, choice)
+#
+#     await asyncio.sleep(60)  # wait for one minute
+#     message_1 = await bot.get_message(channel, message_1.id)
+#
+#     counts = {react.emoji: react.count for react in message_1.reactions}
+#     return
 
 
 bot.run(TOKEN)

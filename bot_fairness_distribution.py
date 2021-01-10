@@ -14,24 +14,25 @@ from matplotlib import pyplot as plt
 number_of_players_loop = 30
 count_loop = 100
 # folder name for bar and histo pngs
-iteration_folder_name = 'Second Iteration'
+iteration_folder_name = 'first_iteration'
 parent_dir = r'C:\Users\Hong Tran\Python\BeeBot'
 
 # creating new "dict_content.xlsx" file
-dict_content_excel = xlsxwriter.Workbook('Code_files/Excel_files/dict_content.xlsx')
+dict_content_excel = xlsxwriter.Workbook('resource_files/bot_fairness_distribution_data'
+                                         '/bfd_excel_files/dict_content.xlsx')
 worksheet = dict_content_excel.add_worksheet()
 
 
 # create new "sample_input.txt" file
-input_file = open("Code_files/Text_files/sample_input.txt", "w")
+input_file = open("resource_files/bot_fairness_distribution_data/bfd_text_files/sample_input.txt", "w")
 # create new "dict_content.txt" file
-dict_content_text = open("Code_files/Text_files/dict_content.txt", "w")
+dict_content_text = open("resource_files/bot_fairness_distribution_data/bfd_text_files/dict_content.txt", "w")
 
 
 # creating a new "iteration_folder"
 # check if folder already exists
 try:
-    child_dir = r'{}\Code_files\botFairnessDistribution_data\botFairnessDistribution_graphs'.format(parent_dir)
+    child_dir = r'{}\resource_files\bot_fairness_distribution_data\bfd_graphs'.format(parent_dir)
     path = os.path.join(child_dir, iteration_folder_name)
     os.mkdir(path)
 except OSError as e:
@@ -45,7 +46,8 @@ while number_of_players < number_of_players_loop+1:
     # also the reason for the "FutureWarning: Passing a negative int..." error c:
     pd.set_option('display.max_colwidth', -1)
     # accessing GamesList.xlsx
-    games_file = pd.read_excel(r'{}\Code_files\Excel_files\GameList.xlsx'.format(parent_dir))
+    games_file = pd.read_excel(r'{}\resource_files\bot_fairness_distribution_data'
+                               r'\bfd_excel_files\game_list.xlsx'.format(parent_dir))
     games_file_df = pd.DataFrame(games_file, columns=['GameName', 'PlayerNumMIN', 'PlayerNumMAX'])
     # calculating "player_range"
     player_range = games_file_df['PlayerNumMAX'] - games_file_df['PlayerNumMIN']
@@ -68,7 +70,7 @@ print('sample_input.txt is ready')
 
 
 # counting repeats
-text = open("Code_files/Text_files/sample_input.txt", "r")
+text = open("resource_files/bot_fairness_distribution_data/bfd_text_files/sample_input.txt", "r")
 
 # initial info for "dict_content.xlsx" file
 dict_content_excel_array = []
@@ -102,7 +104,7 @@ for key in list(d.keys()):
     dict_content_excel_array.append(key_for_dce)
 
 # add "dict_content_excel_array" into "dict_content_excel" file
-for GameName, CountFromData in (dict_content_excel_array):
+for GameName, CountFromData in dict_content_excel_array:
     worksheet.write(dce_row, dce_col, GameName)
     worksheet.write(dce_row, dce_col + 1, CountFromData)
     dce_row += 1
@@ -132,14 +134,14 @@ for key in list(d.keys()):
     game_name_graph.append(key)
     game_repeats.append(d[key])
 ax.bar(game_name_graph, game_repeats)
-plt.savefig(r'Code_files\botFairnessDistribution_data\botFairnessDistribution_graphs\{}\bar_'
+plt.savefig(r'resource_files\bot_fairness_distribution_data\bfd_graphs\{}\bar_'
             r'{}x{}'.format(iteration_folder_name, number_of_players_loop, count_loop))
 plt.show()
 
 
 # create histo graph of data
 plt.hist(game_repeats, bins=games_count)
-plt.savefig(r'Code_files\botFairnessDistribution_data\botFairnessDistribution_graphs\{}\histo_'
+plt.savefig(r'resource_files\bot_fairness_distribution_data\bfd_graphs\{}\histo_'
             r'{}x{}'.format(iteration_folder_name, number_of_players_loop, count_loop))
 plt.show()
 
