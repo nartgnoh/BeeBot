@@ -7,3 +7,4 @@
 - role specific security
 - repeat previous command
 - "next" command have reaction voting
+- highlights

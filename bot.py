@@ -43,9 +43,226 @@ parent_dir = r'C:\Users\Hong Tran\Python\BeeBot'
 yt_links_file = open("resource_files/music_bot_files/yt_links.txt", "w")
 
 # bot prefix
-bot = commands.Bot(command_prefix='BB ')
+bot = commands.Bot(command_prefix='BB ', case_insensitive=True)
 print('bot.py is running!')
 print('updated c:')
+
+
+# bot command to show bee facts
+@bot.command(name='facts', aliases=['fact'], help='Bee facts!')
+async def facts(ctx):
+    img_path = parent_dir + r'\resource_files\image_files\bee_facts_images'
+    fact_images = random.choice([
+        x for x in os.listdir(img_path)
+        if os.path.isfile(os.path.join(img_path, x))
+    ])
+    # credits:
+    # idea from https://github.com/SamKeathley/BeeBot
+    # additional facts from https://www.sciencelearn.org.nz/resources/2002-bees-fun-facts
+    fact_quotes = [
+        ':bee: Bees have 5 eyes. :eyes:',
+        ':bee: Bees are insects, so they have 6 legs. (That\'s a lot of boots :boot:)',
+        ':bee: Male bees in the hive are called drones. :male_sign:',
+        ':bee: Bees fly about 20 mph! :runner:',
+        ':bee: Female bees in the hive (except for her Royal Majesty) are called worker bees! '
+        ':woman_construction_worker:',
+        ':bee: Losing its stinger will cause a bee to die! :skull:',
+        ':bee: Bees carry pollen on their hind legs in a pollen basket or corbicula! :basket:',
+        ':bee: An average beehive can hold around 50,000 bees! :house_with_garden:',
+        ':bee: Foragers must collect nectar from about 2 million flowers to make 1 pound of honey! :sunflower:',
+        ':bee: The average forager makes about 1/12 th of a teaspoon of honey in her lifetime! :honey_pot:',
+        ':bee: The principal form of communication among honey bees is through chemicals called pheromones! :scientist:',
+        ':bee: Honey has been shown to have many health benefits both when eaten and when applied to the skin.'
+        'The darker the honey the better! :honey_pot:',
+        ':bee: There are over 20, 000 different species of bee, found on every continent except Antarctica! '
+        ':earth_americas:',
+        ':bee: Bees love blue and love cluster plants like lavender and rosemary! :blue_heart:',
+        ':bee: A Queen Bee can produce 2,000 eggs a day. Fertilised eggs become females and unfertilised eggs '
+        'become males, with the help of pheromones! :egg:',
+        ':bee: Bees mate high in the sky. Afterwards the male bee loses his reproductive organs and dies! :skull:'
+    ]
+    fact_message = random.choice(fact_quotes)
+
+    await ctx.send('{}'.format(fact_message),
+                   file=discord.File('resource_files/image_files/bee_facts_images/{}'.format(fact_images)))
+
+
+# bot command to show cute angry pictures
+@bot.command(name='happy', aliases=['c:'], help='BeeBot happy! c:')
+async def sad(ctx):
+    img_path = parent_dir + r'\resource_files\image_files\happy_images'
+    happy_images = random.choice([
+        x for x in os.listdir(img_path)
+        if os.path.isfile(os.path.join(img_path, x))
+    ])
+    happy_quotes = [
+        'Smiley! :smile:',
+        'I\'m a happy bee! :smile:',
+        'Very happy. c:'
+    ]
+    happy_message = random.choice(happy_quotes)
+
+    await ctx.send('{}'.format(happy_message),
+                   file=discord.File('resource_files/image_files/happy_images/{}'.format(happy_images)))
+
+
+# bot command to show cute sad pictures
+@bot.command(name='sad', aliases=['sadge', ':c'], help='BeeBot sad! :c')
+async def sad(ctx):
+    img_path = parent_dir + r'\resource_files\image_files\sad_images'
+    sad_images = random.choice([
+        x for x in os.listdir(img_path)
+        if os.path.isfile(os.path.join(img_path, x))
+    ])
+    sad_quotes = [
+        'Big sad.',
+        'Big sadge.',
+        'Do not talk me. Am sad.',
+        'No talk me. Im sad.',
+        'How could you?',
+    ]
+    sad_message = random.choice(sad_quotes)
+
+    await ctx.send('{}'.format(sad_message),
+                   file=discord.File('resource_files/image_files/sad_images/{}'.format(sad_images)))
+
+
+# bot command to show cute angry pictures
+@bot.command(name='angry', aliases=['angy', 'mad', 'hmph', '>:c'], help='BeeBot angry! >:c')
+async def angry(ctx):
+    img_path = parent_dir + r'\resource_files\image_files\angry_images'
+    angry_images = random.choice([
+        x for x in os.listdir(img_path)
+        if os.path.isfile(os.path.join(img_path, x))
+    ])
+    angry_quotes = [
+        'Do not talk me. Am anger.',
+        'No talk me. Im angy.',
+        'Wat you looking at?',
+        'How dare you.',
+        'Hmph.',
+        'I will attack.',
+        'I\'m so done.',
+        ':angry:'
+    ]
+    angry_message = random.choice(angry_quotes)
+
+    await ctx.send('{}'.format(angry_message),
+                   file=discord.File('resource_files/image_files/angry_images/{}'.format(angry_images)))
+
+
+# bot command to pick random colour
+@bot.command(name='pickcolour', aliases=['pickcolor', 'colour', 'color'],
+             help='Picks a colour. (Typically chroma colours)')
+async def colour(ctx):
+    colours_quotes = [
+        'Red',
+        'Orange',
+        'Yellow',
+        'Green',
+        'Light Blue',
+        'Dark Blue',
+        'Purple',
+        'White',
+        'Black',
+        'Pink'
+    ]
+    colours_message = random.choice(colours_quotes)
+    await ctx.send(colours_message)
+
+
+# bot command to wish someone a Happy Birthday
+@bot.command(name='happybirthday', aliases=['hbd', 'birthday'],
+             help='Wishes someone a Happy Birthday! (Try a mention!)')
+async def hbd(ctx, member_name: Optional[str]):
+    if member_name == None:
+        member_name = ''
+    hbd_quotes = [
+        'HAPPY BIRTHDAY {}!!!!!  :partying_face: :birthday: :tada:'.format(member_name),
+        'Wishing you a Happy Birthday {}! :relieved: :birthday: :tada:'.format(member_name),
+        'May all your birthday wishes come true {} — except for the illegal ones!\n:birthday: :tada: '
+        ':neutral_face:'.format(member_name)
+    ]
+    hbd_message = random.choice(hbd_quotes)
+    await ctx.send(hbd_message)
+
+
+# bot command to add suggestions for BeeBot
+@bot.command(name='suggest', aliases=['suggestion'], help='Make a suggestion for a BeeBot feature! (Role specific)')
+# only specific roles can use this command
+@commands.has_role(role_specific_command_name)
+async def suggest(ctx, *, suggestion: Optional[str]):
+    if suggestion == None:
+        await ctx.send('Please include a suggestion! :smile:')
+    else:
+        suggest_file = open("resource_files/text_files/suggestions_for_bot.txt", "a")
+        suggest_file.write('- ' + suggestion + '\n')
+        suggest_file.close()
+        await ctx.send('Your suggestion has been added to the list! :face_with_monocle:')
+
+
+# bot command to flip coin
+@bot.command(name='coinflip', aliases=['coin', 'coins', 'flip', 'flips'], help='Simulates coin flip.')
+async def coin_flip(ctx, number_of_coins: Optional[int]):
+    try:
+        # empty message
+        cf_message = ''
+        # default 1 coin
+        if number_of_coins == None:
+            number_of_coins = 1
+        if number_of_coins > 300 or number_of_coins < 1:
+            await ctx.send('Sorry! The coin is broken. :cry: Try again! ')
+        else:
+            coin_flip_ht = [
+                'Heads, ',
+                'Tails, '
+            ]
+            cf_quotes = [
+                'You coin flip(s) were:\n',
+                'Clink, spin, spin, clink:\n',
+                'Heads or Tails? :open_mouth:\n',
+                'I wish you good RNG :relieved:\n',
+                ':coin:\n'
+            ]
+            # add coin flips to string
+            for i in range(number_of_coins):
+                cf_message = cf_message + random.choice(coin_flip_ht)
+            await ctx.send('{}{}'.format(random.choice(cf_quotes), cf_message[:-2]))
+    except:
+        # if out of bounds of bot's capability
+        await ctx.send('Sorry! The coin is broken. :cry: Try again! ')
+
+
+# bot command to roll dice (no specification is an auto 1D6)
+@bot.command(name='rolldice', aliases=['diceroll', 'roll', 'dice'],
+             help='Simulates rolling dice. (Auto: 1D6)')
+async def roll(ctx, number_of_dice: Optional[int], number_of_sides: Optional[int]):
+    try:
+        # default 1D6 dice
+        if number_of_dice == None:
+            number_of_dice = 1
+        if number_of_sides == None:
+            number_of_sides = 6
+        if number_of_dice > 500 or number_of_dice < 1 or number_of_sides < 1:
+            await ctx.send('Sorry! The dice is broken. :cry: Try again! ')
+        else:
+            dice = [
+                str(random.choice(range(1, number_of_sides + 1)))
+                for _ in range(number_of_dice)
+            ]
+            rd_quotes = [
+                'Your dice roll(s) were:\n',
+                'Clack, rattle, clatter:\n',
+                'Highroller?!? :open_mouth:\n',
+                'I wish you good RNG :relieved:\n',
+                ':game_die:\n',
+                ':skull: + :ice_cube:\n'
+            ]
+            rd_message = random.choice(rd_quotes)
+            await ctx.send('{}'.format(rd_message) + ', '.join(dice))
+    except:
+        # if out of bounds of bot's capability
+        await ctx.send('Sorry! The dice is broken. :cry: Try again! ')
 
 
 # bot command to pick a game from an excel sheet of games with number of player specification
@@ -100,7 +317,7 @@ async def pick_game(ctx, number_of_players: Optional[int]):
 
 
 # bot command to add a game with specific info to the "GameList.xlsx"
-@bot.command(name='addgame', help='Add a game to \"pickgame\" command. (Role specific)')
+@bot.command(name='addgame', help='Add a game to \"pickgame\" command. (Max: 100) (Role specific)')
 # only specific roles can use this command
 @commands.has_role(role_specific_command_name)
 async def add_game(ctx, game_name: Optional[str], min_players: Optional[int], max_players: Optional[int]):
@@ -185,111 +402,6 @@ async def split_team(ctx, number_of_teams: Optional[int]):
         await ctx.send('An error has occurred! :confounded: Please try again!')
 
 
-# bot command to add suggestions for BeeBot
-@bot.command(name='suggest', aliases=['suggestion'], help='Make a suggestion for a BeeBot feature! (Role specific)')
-# only specific roles can use this command
-@commands.has_role(role_specific_command_name)
-async def feature_suggest(ctx, *, suggestion: Optional[str]):
-    if suggestion == None:
-        await ctx.send('Please include a suggestion! :smile:')
-    else:
-        suggest_file = open("resource_files/text_files/suggestions_for_bot.txt", "a")
-        suggest_file.write('- ' + suggestion + '\n')
-        suggest_file.close()
-        await ctx.send('Your suggestion has been added to the list! :face_with_monocle:')
-
-
-# bot command to pick random colour
-@bot.command(name='pickcolour', aliases=['pickcolor', 'colour', 'color'],
-             help='Picks a colour. (Typically chroma colours)')
-async def colour(ctx):
-    colours_quotes = [
-        'Red',
-        'Orange',
-        'Yellow',
-        'Green',
-        'Light Blue',
-        'Dark Blue',
-        'Purple',
-        'White',
-        'Black',
-        'Pink'
-    ]
-    colours_message = random.choice(colours_quotes)
-    await ctx.send(colours_message)
-
-
-# bot command to show cute angry pictures
-@bot.command(name='angry', aliases=['angy', 'mad', 'hmph'], help='BeeBot angry! >:c')
-async def angry(ctx):
-    img_path = parent_dir + r'\resource_files\image_files\angry_images'
-    angry_images = random.choice([
-        x for x in os.listdir(img_path)
-        if os.path.isfile(os.path.join(img_path, x))
-    ])
-    angry_quotes = [
-        'Do not talk me. Am anger.',
-        'No talk me. Im angy.',
-        'Wat you looking at?',
-        'How dare you.',
-        'Hmph.',
-        'I will attack.',
-        'I\'m so done.'
-    ]
-    angry_message = random.choice(angry_quotes)
-
-    await ctx.send('{}'.format(angry_message),
-                   file=discord.File('resource_files/image_files/angry_images/{}'.format(angry_images)))
-
-
-# bot command to wish someone a Happy Birthday
-@bot.command(name='happybirthday', aliases=['hbd', 'birthday'],
-             help='Wishes someone a Happy Birthday! (Try a mention!)')
-async def hbd(ctx, member_name: Optional[str]):
-    if member_name == None:
-        member_name = ''
-    hbd_quotes = [
-        'HAPPY BIRTHDAY {}!!!!!  :partying_face: :birthday: :tada:'.format(member_name),
-        'Wishing you a Happy Birthday {}! :relieved: :birthday: :tada:'.format(member_name),
-        'May all your birthday wishes come true {} — except for the illegal ones!\n:birthday: :tada: '
-        ':neutral_face:'.format(member_name)
-    ]
-    hbd_message = random.choice(hbd_quotes)
-    await ctx.send(hbd_message)
-
-
-# bot command to roll dice (no specification is an auto 1D6)
-@bot.command(name='rolldice', aliases=['diceroll', 'roll', 'dice'],
-             help='Simulates rolling dice. (Auto: 1D6)')
-async def roll(ctx, number_of_dice: Optional[int], number_of_sides: Optional[int]):
-    try:
-        # default 1D6 dice
-        if number_of_dice == None:
-            number_of_dice = 1
-        if number_of_sides == None:
-            number_of_sides = 6
-        if number_of_dice > 500:
-            await ctx.send('Sorry! The dice is broken. :cry: Try again! ')
-        else:
-            dice = [
-                str(random.choice(range(1, number_of_sides + 1)))
-                for _ in range(number_of_dice)
-            ]
-            rd_quotes = [
-                'Your dice roll(s) were:\n',
-                'Clack, rattle, clatter:\n',
-                'Highroller?!? :open_mouth:\n',
-                'I wish you good RNG :relieved:\n',
-                ':game_die:\n',
-                ':skull: + :ice_cube:\n'
-            ]
-            rd_message = random.choice(rd_quotes)
-            await ctx.send('{}'.format(rd_message) + ', '.join(dice))
-    except:
-        # if out of bounds of bot's capability
-        await ctx.send('Sorry! The dice is broken. :cry: Try again! ')
-
-
 # bot command to play Youtube Audio
 @bot.command(name='play', aliases=['playaudio', 'playsong'],
              help='♫ Plays YouTube audio! Provide YouTube search or link! (Role specific) ♫')
@@ -364,7 +476,8 @@ async def next(ctx):
                 # download "next_song.mp3" and play that
                 download_next_song(ctx)
         else:
-            await ctx.send("There is not more audio in the queue! :flushed: Try the \"play\" command to add a song! :smile:")
+            await ctx.send(
+                "There is not more audio in the queue! :flushed: Try the \"play\" command to add a song! :smile:")
     except:
         await ctx.send("An error has occurred! :open_mouth: Please try again!")
 
@@ -584,7 +697,7 @@ def download_song(ctx):
 
         # calling this "download_song" function again to play next song
         voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
-        voice.play(discord.FFmpegPCMAudio("Code_files/music_bot_files/song.mp3"), after=lambda e: download_song(ctx))
+        voice.play(discord.FFmpegPCMAudio("resource_files/music_bot_files/song.mp3"), after=lambda e: download_song(ctx))
         voice.is_playing()
 
     except:
@@ -624,7 +737,8 @@ def download_next_song(ctx):
 
         # calling this "download_song" function again to play next song
         voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
-        voice.play(discord.FFmpegPCMAudio("Code_files/music_bot_files/next_song.mp3"), after=lambda e: download_song(ctx))
+        voice.play(discord.FFmpegPCMAudio("resource_files/music_bot_files/next_song.mp3"),
+                   after=lambda e: download_song(ctx))
         voice.is_playing()
 
     except:
