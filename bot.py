@@ -9,18 +9,15 @@ import json
 import urllib
 import asyncio
 import requests
-import pdb
-import openpyxl as op
 import numpy as np
 import re
+import urllib.request
 
+from datetime import datetime
 from pathlib import Path
 from openpyxl import load_workbook
-from time import sleep
-from numpy import source
 from youtube_search import YoutubeSearch
 from discord.ext import commands
-from discord.utils import get
 from dotenv import load_dotenv
 from typing import Optional
 
@@ -30,6 +27,7 @@ loop = asyncio.get_event_loop()
 # get from .env file
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
+TENOR_KEY = os.getenv('TENOR_KEY')
 role_specific_command_name = 'Bot Commander'
 
 # connecting with discord with "discord intents"
@@ -41,11 +39,12 @@ client = discord.Client(intents=intents)
 parent_dir = r'C:\Users\Hong Tran\Python\BeeBot'
 # create new "yt_links.txt" file on run
 yt_links_file = open("resource_files/music_bot_files/yt_links.txt", "w")
+# set the current present time
+present = datetime.now()
 
 # bot prefix
 bot = commands.Bot(command_prefix='BB ', case_insensitive=True)
 print('bot.py is running!')
-print('updated c:')
 
 
 # bot command to show bee facts
@@ -89,7 +88,7 @@ async def facts(ctx):
 
 # bot command to show cute angry pictures
 @bot.command(name='happy', aliases=['c:'], help='BeeBot happy! c:')
-async def sad(ctx):
+async def happy(ctx):
     img_path = parent_dir + r'\resource_files\image_files\happy_images'
     happy_images = random.choice([
         x for x in os.listdir(img_path)
@@ -128,7 +127,7 @@ async def sad(ctx):
 
 
 # bot command to show cute angry pictures
-@bot.command(name='angry', aliases=['angy', 'mad', 'hmph', '>:c'], help='BeeBot angry! >:c')
+@bot.command(name='angry', aliases=['angy', 'mad', 'hmph', '>:c', 'madge'], help='BeeBot angry! >:c')
 async def angry(ctx):
     img_path = parent_dir + r'\resource_files\image_files\angry_images'
     angry_images = random.choice([
@@ -187,6 +186,235 @@ async def hbd(ctx, member_name: Optional[str]):
     await ctx.send(hbd_message)
 
 
+@bot.command(name='gif', aliases=['giphy', 'tenor'], help='Find gif from tenor.')
+async def gif(ctx, *, search: Optional[str]):
+    # set discord.Embed colour to blue
+    embed = discord.Embed(colour=discord.Colour.blue())
+    # search 'bees' if no given search
+    if search == None:
+        search = 'bees'
+    # make the search, url friendly by changing all spaces into "+"
+    search.replace(' ', '+')
+    # api.tenor website for given search
+    # settings: ContentFilter = medium (PG)
+    url = 'https://api.tenor.com/v1/search?q={}&key={}&ContentFilter=medium'.format(search, TENOR_KEY)
+    # get url info
+    get_url_info = requests.get(url)
+    # 200 status_code means tenor is working
+    if get_url_info.status_code == 200:
+        # checking for results
+        json_search = get_url_info.json()
+        json_check = json_search['next']
+        if json_check == "0":
+            await ctx.send("Sorry! Couldn't find any gifs for {}! :cry:".format(search))
+        else:
+            # load json to get url data
+            data = json.loads(get_url_info.text)
+            # random choice
+            gif_choice = random.randint(0, 9)
+            # get gif result
+            result_gif = data['results'][gif_choice]['media'][0]['gif']['url']
+            # embed gif and send
+            embed.set_image(url=result_gif)
+            await ctx.send(embed=embed)
+    # 404 status_code means tenor is not working/down
+    elif get_url_info.status_code == 404:
+        await ctx.send("Sorry! Tenor is not working at the moment! :cry:")
+
+
+# bot command to add author from availability list
+@bot.command(name='clashadd', aliases=['addclash', 'aclash', 'clasha', 'clashavailable'],
+             help='Add your clash availability!')
+# only specific roles can use this command
+@commands.has_role(role_specific_command_name)
+async def clash_add(ctx, *, date: Optional[str]):
+    try:
+        # available member for clash
+        available_member = ctx.message.author
+        if date == None:
+            await ctx.send('Please specify either \'Sat\' or \'Sun\' after command! :smile:')
+        else:
+            # check if member is already in the "clash_available.txt" file
+            check = False
+            # help case sensitivity
+            date = date.lower()
+            # if not sun or sat (the usual clash days)
+            if not date == 'sat' and not date == 'sun':
+                await ctx.send('Invalid input! :flushed: Please specify either \'Sat\' or \'Sun\' '
+                               'after command! :smile:')
+            else:
+                # read the "clash_dates.txt" file and check if the given date >= present
+                clash_dates_file = open("resource_files/clash_files/clash_dates.txt")
+                clash_dates_file.flush()
+                new_clash_date = clash_dates_file.readline()
+                clash_date_convert = datetime.strptime(new_clash_date, '%d-%m-%Y %H:%M')
+                if clash_date_convert >= present:
+                    # capitalize "Sun" and "Sat"
+                    date = date.capitalize()
+                    text_input = str(available_member.id) + date + ' : ' + str(available_member.display_name) + '\n'
+                    check_input = str(available_member.id) + date
+                    clash_available_file = open("resource_files/clash_files/clash_available.txt")
+                    check_txt = clash_available_file.readlines()
+                    # check if member is already in the "clash_available.txt" file
+                    for lines in check_txt:
+                        # look at only the id and date from "lines"
+                        only_id = re.sub("\D", "", lines)
+                        after_id = lines[len(only_id):]
+                        only_date = after_id[:3]
+                        # new line
+                        new_line = only_id + only_date
+                        if check_input == new_line:
+                            check = True
+                    # if member is already in the "clash_available.txt" file
+                    if check == True:
+                        await ctx.send('Your name was already added to the list for this day! :open_mouth:')
+                    # if member is NOT in the document, add them to the "clash_available.txt" file
+                    else:
+                        clash_available_file_a = open("resource_files/clash_files/clash_available.txt", "a")
+                        clash_available_file_a.write(text_input)
+                        clash_available_file_a.close()
+                        await ctx.send('Your availability has been added to the list! :white_check_mark:')
+    except:
+        await ctx.send('There\'s currently no clash scheduled! :open_mouth: Try again next clash!')
+
+
+# bot command to remove author from availability list
+@bot.command(name='clashremove', aliases=['removeclash', 'rclash', 'clashr'],
+             help='Remove your clash availability!')
+# only specific roles can use this command
+@commands.has_role(role_specific_command_name)
+async def clash_remove(ctx, *, date: Optional[str]):
+    try:
+        # available member for clash
+        available_member = ctx.message.author
+        if date == None:
+            await ctx.send('Please specify either \'Sat\' or \'Sun\' after command! :smile:')
+        else:
+            # check if member is in the "clash_available.txt" file
+            check = False
+            # help case sensitivity
+            date = date.lower()
+            # if not sun or sat (the usual clash days)
+            if not date == 'sat' and not date == 'sun':
+                await ctx.send('Invalid input! :flushed: Please specify either \'Sat\' or \'Sun\' '
+                               'after command! :smile:')
+            else:
+                # read the "clash_dates.txt" file and check if the given date >= present
+                clash_dates_file = open("resource_files/clash_files/clash_dates.txt")
+                clash_dates_file.flush()
+                new_clash_date = clash_dates_file.readline()
+                clash_date_convert = datetime.strptime(new_clash_date, '%d-%m-%Y %H:%M')
+                if clash_date_convert >= present:
+                    # capitalize "Sun" and "Sat"
+                    date = date.capitalize()
+                    text_input = str(available_member.id) + date + ' : ' + str(available_member.display_name) + '\n'
+                    check_input = str(available_member.id) + date
+                    clash_available_file = open("resource_files/clash_files/clash_available.txt")
+                    check_txt = clash_available_file.readlines()
+                    # check if member is in the "clash_available.txt" file
+                    for lines in check_txt:
+                        # look at only the id and date from "lines"
+                        only_id = re.sub("\D", "", lines)
+                        after_id = lines[len(only_id):]
+                        only_date = after_id[:3]
+                        # new line
+                        new_line = only_id + only_date
+                        if check_input == new_line:
+                            check = True
+                    # if member is in the "clash_available.txt" file
+                    if check == True:
+                        # new array to store file
+                        new_array_with_remove = []
+                        # find the member and delete them
+                        for lines in check_txt:
+                            if text_input == lines:
+                                lines = lines.replace(lines, "")
+                            # add the other names from the text file into "new_array_with_remove"
+                            new_array_with_remove.append(lines)
+                        # close file
+                        clash_available_file.close()
+                        # create new text file with the same name
+                        new_clash_available_file = open('resource_files/clash_files/clash_available.txt', 'w')
+                        # write array into new file
+                        for lines in new_array_with_remove:
+                            new_clash_available_file.write(lines)
+                        new_clash_available_file.close()
+                        await ctx.send('Your name was removed from the availability list. :slight_smile:')
+                    else:
+                        await ctx.send('Your name wasn\'t on the availability list. :thinking: '
+                                       'Add it with the "addclash" command! :smile:')
+    except:
+        await ctx.send('There\'s currently no clash scheduled! :open_mouth: Try again next clash!')
+
+
+# bot command to view clash availability list
+@bot.command(name='clashview', aliases=['viewclash', 'clashv', 'vclash'],
+             help='View list of people available for clash.')
+# only specific roles can use this command
+@commands.has_role(role_specific_command_name)
+async def clash_view(ctx):
+    try:
+        clash_array = []
+        clash_available_file = open("resource_files/clash_files/clash_available.txt")
+        clash_available_file.flush()
+        clash_dates_file = open("resource_files/clash_files/clash_dates.txt")
+        clash_dates_file.flush()
+
+        # check if "clash_dates.txt" has a valid date
+        new_clash_date = clash_dates_file.readline()
+        clash_date_convert = datetime.strptime(new_clash_date, '%d-%m-%Y %H:%M')
+        if clash_date_convert >= present:
+            # check that "clash_availability.txt" file is not empty
+            ca_check = Path(r'{}\resource_files\clash_files\clash_available.txt'.format(parent_dir))
+            if not ca_check.stat().st_size == 0:
+                # add lines in "clash_availability.txt" to a "clash_array"
+                for lines in clash_available_file:
+                    lines = lines.rstrip().lstrip('0123456789')
+                    clash_array.append(lines)
+                # alphabetize "clash_array"
+                clash_array = sorted(clash_array, key=str.lower)
+                print(clash_array)
+                # sort "clash_array" into "saturday" and "sunday"
+                saturday = 'Saturday : '
+                sunday = 'Sunday : '
+                for key in clash_array:
+                    if key.startswith('Sat :'):
+                        saturday = saturday + key[6:] + ', '
+                    elif key.startswith('Sun : '):
+                        sunday = sunday + key[6:] + ', '
+                # add "saturday" and "sunday" to "clash_message"
+                clash_message = saturday[:-2] + '\n' + sunday[:-2]
+                await ctx.send('The people available for clash are:\n{}'.format(clash_message))
+            else:
+                await ctx.send('No one has added their availability yet! :cry: '
+                               'Add yours with the \"addclash\" command! :smile:')
+    except:
+        await ctx.send('There\'s currently no clash scheduled! :open_mouth: Try again next clash!')
+
+
+# bot command to set clash date
+@bot.command(name='clashset', aliases=['setclash', 'sclash', 'clashs'],
+             help='Set next clash. (Server Owner role specific) (DD-MM-YY HH:MM)')
+# only VERY specific roles can use this command
+@commands.has_role('Server Owner')
+async def clash_set(ctx, *, clash_date: Optional[str]):
+    try:
+        clash_date_convert = datetime.strptime(clash_date, '%d-%m-%Y %H:%M')
+        if clash_date_convert >= present:
+            # create new "clash_available.txt" and new "clash_date.txt" files
+            new_clash_available_text = open("resource_files/clash_files/clash_available.txt", "w")
+            new_clash_dates_text = open("resource_files/clash_files/clash_dates.txt", "w")
+            # add the "clash_date" to "clash_date.txt" file
+            clash_dates_file_a = open("resource_files/clash_files/clash_dates.txt", "a")
+            clash_dates_file_a.write(clash_date)
+            clash_dates_file_a.close()
+            await ctx.send('You set up a new clash! :smile:')
+        else:
+            await ctx.send('Invalid input! :flushed:')
+    except:
+        await ctx.send('Invalid input! :flushed:')
+
+
 # bot command to add suggestions for BeeBot
 @bot.command(name='suggest', aliases=['suggestion'], help='Make a suggestion for a BeeBot feature! (Role specific)')
 # only specific roles can use this command
@@ -211,7 +439,7 @@ async def coin_flip(ctx, number_of_coins: Optional[int]):
         if number_of_coins == None:
             number_of_coins = 1
         if number_of_coins > 300 or number_of_coins < 1:
-            await ctx.send('Sorry! The coin is broken. :cry: Try again! ')
+            await ctx.send('Sorry! The coin is broken. :cry: Try again!')
         else:
             coin_flip_ht = [
                 'Heads, ',
@@ -230,7 +458,7 @@ async def coin_flip(ctx, number_of_coins: Optional[int]):
             await ctx.send('{}{}'.format(random.choice(cf_quotes), cf_message[:-2]))
     except:
         # if out of bounds of bot's capability
-        await ctx.send('Sorry! The coin is broken. :cry: Try again! ')
+        await ctx.send('Sorry! The coin is broken. :cry: Try again!')
 
 
 # bot command to roll dice (no specification is an auto 1D6)
@@ -291,6 +519,7 @@ async def pick_game(ctx, number_of_players: Optional[int]):
         player_range_check_df = games_file_df.loc[
             (games_file_df['PlayerNumMIN'] <= number_of_players) & (games_file_df['PlayerNumMAX'] >= number_of_players)]
 
+        # wip
         ####################################################
         # for column in player_range_check_df:
         # print(player_range_check_df)
@@ -351,7 +580,7 @@ async def add_game(ctx, game_name: Optional[str], min_players: Optional[int], ma
 
 
 # bot command to split teams
-@bot.command(name='splitteam', aliases=['teamsplit', 'maketeams', 'maketeam', 'teams', 'team'],
+@bot.command(name='splitteam', aliases=['teamsplit', 'maketeams', 'maketeam', 'pickteams', 'pickteam', 'teams', 'team'],
              help='Splits members in voice channel into teams.')
 async def split_team(ctx, number_of_teams: Optional[int]):
     max_teams = 101
@@ -363,7 +592,7 @@ async def split_team(ctx, number_of_teams: Optional[int]):
     try:
         # set "number_of_teams" to 1 if none
         if number_of_teams == None:
-            number_of_teams = 1
+            number_of_teams = 2
         if number_of_teams <= max_teams:
             # create a "players_array" for members in the voice channel
             channel = ctx.message.author.voice.channel
@@ -443,14 +672,15 @@ async def play(ctx, *, yt_search_or_link: Optional[str]):
                                    ':musical_note:'.format(message_now_playing(url)))
                     # call "download_song" function
                     download_song(ctx)
-                    voice.play(discord.FFmpegPCMAudio("resource_files/music_bot_files/song.mp3"),
-                               after=lambda e: download_song(ctx))
-                    voice.is_playing()
+                    # already seen in "download_song()" function
+                    # voice.play(discord.FFmpegPCMAudio("resource_files/music_bot_files/song.mp3"),
+                    # after=lambda e: download_song(ctx))
+                    # voice.is_playing()
                 else:
                     # if music is audio is playing already, add audio to queue
                     await ctx.send(':musical_note: Your audio has been added to the queue! :smile:')
     except:
-        print("Ignoring errors c:")
+        print("Ignoring errors.")
 
 
 # bot command to go to next audio in queue by reaction vote
@@ -494,7 +724,7 @@ async def leave(ctx):
         yt_current_file = open("resource_files/music_bot_files/yt_current.txt", "w")
         await ctx.send("Ok I'll leave. :cry:")
         voice.stop()
-        await voice.disconnect()
+        voice.disconnect()
     else:
         await ctx.send("BeeBot is not connected to a voice channel. :thinking:")
 
@@ -695,13 +925,16 @@ def download_song(ctx):
             if file.endswith(".mp3"):
                 os.rename(file, "resource_files/music_bot_files/song.mp3")
 
-        # calling this "download_song" function again to play next song
         voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
-        voice.play(discord.FFmpegPCMAudio("resource_files/music_bot_files/song.mp3"), after=lambda e: download_song(ctx))
+        # calling this "download_song" function again to play next song
+        voice.play(discord.FFmpegPCMAudio("resource_files/music_bot_files/song.mp3"),
+                   after=lambda e: download_song(ctx))
         voice.is_playing()
 
+        voice.source.volume = 100
+        voice.source = discord.PCMVolumeTransformer(voice.source, volume=1.0)
     except:
-        print('\"download_song\" function has errors')
+        print('No more audio in queue.')
 
 
 # function to download NEXT audio -> goes back to "download_song" loop after
@@ -761,15 +994,11 @@ def get_url():
     fl_yt_links_file = open("resource_files/music_bot_files/yt_links.txt")
     # reload txt file
     fl_yt_links_file.flush()
-    new_url = fl_yt_links_file.readline()
-    # # ignore first line because it is a "\n" character
-    # if new_url == '\n':
-    #     new_url = fl_yt_links_file.readline()
-    url = new_url
+    url = fl_yt_links_file.readline()
     return url
 
 
-# # does not work c:
+# wip
 # async def count_reactions(message):
 #     channel = message.channel
 #     choices = {"🇦": "Solos",

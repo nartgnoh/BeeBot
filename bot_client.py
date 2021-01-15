@@ -18,6 +18,9 @@ async def on_ready():
     await client.change_presence(status=discord.Status.online, activity=discord.Game(name="with BEES NUTS (type \"BB "
                                                                                           "help\")"))
     print(f'{client.user.name} has connected to Discord! uwu')
+    # run "clash_dates.py"
+    os.system('python clash_dates.py')
+    # run "bot.py"
     os.system('python bot.py')
 
 

@@ -1,7 +1,8 @@
+# clash_dates.py
+# Every time BeeBot runs, check the "present" date and the "clash_dates.txt" file to see if clash is soon
+
 import os
 from datetime import datetime
-
-# Every time BeeBot runs, check the "present" date and the "clash_dates.txt" file to see if clash is soon
 
 present = datetime.now()
 
@@ -30,3 +31,5 @@ if os.path.isfile("resource_files/clash_files/clash_dates.txt"):
 if os.path.isfile("resource_files/clash_files/clash_available.txt"):
     if clash_date < present:
         os.remove("resource_files/clash_files/clash_available.txt")
+
+print('clash_dates.py is finished!')
