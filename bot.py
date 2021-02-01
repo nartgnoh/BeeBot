@@ -12,6 +12,9 @@ import requests
 import numpy as np
 import re
 import urllib.request
+import logging
+import subprocess
+import time
 
 from datetime import datetime
 from pathlib import Path
@@ -186,10 +189,12 @@ async def hbd(ctx, member_name: Optional[str]):
     await ctx.send(hbd_message)
 
 
-@bot.command(name='gif', aliases=['giphy', 'tenor'], help='Find gif from tenor.')
+@bot.command(name='gif', aliases=['giphy', 'tenor'], help='Random gif from Tenor.')
+# only specific roles can use this command
+@commands.has_role(role_specific_command_name)
 async def gif(ctx, *, search: Optional[str]):
     # set discord.Embed colour to blue
-    embed = discord.Embed(colour=discord.Colour.blue())
+    embed = discord.Embed(colour=discord.Colour.blue(), title='GIF from Tenor')
     # search 'bees' if no given search
     if search == None:
         search = 'bees'
@@ -210,8 +215,8 @@ async def gif(ctx, *, search: Optional[str]):
         else:
             # load json to get url data
             data = json.loads(get_url_info.text)
-            # random choice
-            gif_choice = random.randint(0, 9)
+            # random choice between 0 and min of "9 or len(data['results'])"
+            gif_choice = random.randint(0, min(9, len(data['results'])))
             # get gif result
             result_gif = data['results'][gif_choice]['media'][0]['gif']['url']
             # embed gif and send
@@ -373,7 +378,6 @@ async def clash_view(ctx):
                     clash_array.append(lines)
                 # alphabetize "clash_array"
                 clash_array = sorted(clash_array, key=str.lower)
-                print(clash_array)
                 # sort "clash_array" into "saturday" and "sunday"
                 saturday = 'Saturday : '
                 sunday = 'Sunday : '
@@ -394,7 +398,7 @@ async def clash_view(ctx):
 
 # bot command to set clash date
 @bot.command(name='clashset', aliases=['setclash', 'sclash', 'clashs'],
-             help='Set next clash. (Server Owner role specific) (DD-MM-YY HH:MM)')
+             help='Set next clash. (Server Owner role specific) (DD-MM-YYYY HH:MM)')
 # only VERY specific roles can use this command
 @commands.has_role('Server Owner')
 async def clash_set(ctx, *, clash_date: Optional[str]):
@@ -593,7 +597,7 @@ async def split_team(ctx, number_of_teams: Optional[int]):
         # set "number_of_teams" to 1 if none
         if number_of_teams == None:
             number_of_teams = 2
-        if number_of_teams <= max_teams:
+        if number_of_teams <= max_teams or number_of_teams > 0:
             # create a "players_array" for members in the voice channel
             channel = ctx.message.author.voice.channel
             for member in channel.members:
@@ -626,7 +630,7 @@ async def split_team(ctx, number_of_teams: Optional[int]):
 
             await ctx.send('The teams are : \n{}'.format(final_message))
         else:
-            await ctx.send('Too many teams! :confounded: Please try again!')
+            await ctx.send('An error has occurred! :confounded: Please try again!')
     except:
         await ctx.send('An error has occurred! :confounded: Please try again!')
 
@@ -760,11 +764,23 @@ async def resume(ctx):
              help='♫ View the current audio! ♫')
 async def view_current(ctx):
     try:
+        # get the length of song.mp3
+        song_file = r'{}\resource_files\music_bot_files\song.mp3'.format(parent_dir)
+        song_length = subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of',
+                                 'default=noprint_wrappers=1:nokey=1', song_file], stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT)
+        song_seconds = int(float(song_length.stdout))
+        song_time = time.gmtime(song_seconds)
+        song_duration = str(time.strftime("%H:%M:%S", song_time))
+        if song_duration[:2] == "00":
+            song_duration = song_duration[3:]
+
+        # get name of song
         yt_current_file = open("resource_files/music_bot_files/yt_current.txt")
         read_file = yt_current_file.readline()
         message = message_now_playing(read_file)
-        await ctx.send(':musical_note:  BeeBot is currently playing ***{}!***  '
-                       ':musical_note:'.format(message))
+        await ctx.send(':musical_note:  BeeBot is currently playing ***{} (Duration: {})!*** '
+                       ':musical_note:'.format(message, song_duration))
     except:
         await ctx.send("There's no current audio! :open_mouth:")
 
@@ -966,11 +982,11 @@ def download_next_song(ctx):
             ydl.download([url])
         for file in os.listdir("./"):
             if file.endswith(".mp3"):
-                os.rename(file, "resource_files/music_bot_files/next_song.mp3")
+                os.rename(file, "resource_files/music_bot_files/song.mp3")
 
         # calling this "download_song" function again to play next song
         voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
-        voice.play(discord.FFmpegPCMAudio("resource_files/music_bot_files/next_song.mp3"),
+        voice.play(discord.FFmpegPCMAudio("resource_files/music_bot_files/song.mp3"),
                    after=lambda e: download_song(ctx))
         voice.is_playing()
 
