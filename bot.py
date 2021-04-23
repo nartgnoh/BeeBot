@@ -15,6 +15,7 @@ import urllib.request
 import logging
 import subprocess
 import time
+import ast
 
 from datetime import datetime
 from pathlib import Path
@@ -32,11 +33,12 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 TENOR_KEY = os.getenv('TENOR_KEY')
 role_specific_command_name = 'Bot Commander'
+owner_specific_command_name = 'Server Owner'
 
 # connecting with discord with "discord intents"
 intents = discord.Intents.default()
 intents.members = True
-client = discord.Client(intents=intents)
+# client = discord.Client(intents=intents) *unnecessary
 
 # parent directory
 parent_dir = r'C:\Users\Hong Tran\Python\BeeBot'
@@ -46,7 +48,7 @@ yt_links_file = open("resource_files/music_bot_files/yt_links.txt", "w")
 present = datetime.now()
 
 # bot prefix
-bot = commands.Bot(command_prefix='BB ', case_insensitive=True)
+bot = commands.Bot(command_prefix='BB ', case_insensitive=True, intents=intents)
 print('bot.py is running!')
 
 
@@ -61,29 +63,9 @@ async def facts(ctx):
     # credits:
     # idea from https://github.com/SamKeathley/BeeBot
     # additional facts from https://www.sciencelearn.org.nz/resources/2002-bees-fun-facts
-    fact_quotes = [
-        ':bee: Bees have 5 eyes. :eyes:',
-        ':bee: Bees are insects, so they have 6 legs. (That\'s a lot of boots :boot:)',
-        ':bee: Male bees in the hive are called drones. :male_sign:',
-        ':bee: Bees fly about 20 mph! :runner:',
-        ':bee: Female bees in the hive (except for her Royal Majesty) are called worker bees! '
-        ':woman_construction_worker:',
-        ':bee: Losing its stinger will cause a bee to die! :skull:',
-        ':bee: Bees carry pollen on their hind legs in a pollen basket or corbicula! :basket:',
-        ':bee: An average beehive can hold around 50,000 bees! :house_with_garden:',
-        ':bee: Foragers must collect nectar from about 2 million flowers to make 1 pound of honey! :sunflower:',
-        ':bee: The average forager makes about 1/12 th of a teaspoon of honey in her lifetime! :honey_pot:',
-        ':bee: The principal form of communication among honey bees is through chemicals called pheromones! :scientist:',
-        ':bee: Honey has been shown to have many health benefits both when eaten and when applied to the skin.'
-        'The darker the honey the better! :honey_pot:',
-        ':bee: There are over 20, 000 different species of bee, found on every continent except Antarctica! '
-        ':earth_americas:',
-        ':bee: Bees love blue and love cluster plants like lavender and rosemary! :blue_heart:',
-        ':bee: A Queen Bee can produce 2,000 eggs a day. Fertilised eggs become females and unfertilised eggs '
-        'become males, with the help of pheromones! :egg:',
-        ':bee: Bees mate high in the sky. Afterwards the male bee loses his reproductive organs and dies! :skull:'
-    ]
-    fact_message = random.choice(fact_quotes)
+    with open(parent_dir + '/resource_files/text_files/bee_facts.txt', 'r') as file:
+        fact_quotes = file.readlines()
+        fact_message = random.choice(fact_quotes)
 
     await ctx.send('{}'.format(fact_message),
                    file=discord.File('resource_files/image_files/bee_facts_images/{}'.format(fact_images)))
@@ -158,16 +140,7 @@ async def angry(ctx):
              help='Picks a colour. (Typically chroma colours)')
 async def colour(ctx):
     colours_quotes = [
-        'Red',
-        'Orange',
-        'Yellow',
-        'Green',
-        'Light Blue',
-        'Dark Blue',
-        'Purple',
-        'White',
-        'Black',
-        'Pink'
+        'Red', 'Orange', 'Yellow', 'Green', 'Light Blue', 'Dark Blue', 'Purple', 'White', 'Black', 'Pink',
     ]
     colours_message = random.choice(colours_quotes)
     await ctx.send(colours_message)
@@ -176,7 +149,7 @@ async def colour(ctx):
 # bot command to wish someone a Happy Birthday
 @bot.command(name='happybirthday', aliases=['hbd', 'birthday'],
              help='Wishes someone a Happy Birthday! (Try a mention!)')
-async def hbd(ctx, member_name: Optional[str]):
+async def hbd(ctx, *, member_name: Optional[str]):
     if member_name == None:
         member_name = ''
     hbd_quotes = [
@@ -189,12 +162,13 @@ async def hbd(ctx, member_name: Optional[str]):
     await ctx.send(hbd_message)
 
 
+# bot command to send gif/tenor
 @bot.command(name='gif', aliases=['giphy', 'tenor'], help='Random gif from Tenor.')
 # only specific roles can use this command
 @commands.has_role(role_specific_command_name)
 async def gif(ctx, *, search: Optional[str]):
     # set discord.Embed colour to blue
-    embed = discord.Embed(colour=discord.Colour.blue(), title='GIF from Tenor')
+    embed = discord.Embed(colour=discord.Colour.blue(), title='GIF from Tenor for \"{}\"'.format(search))
     # search 'bees' if no given search
     if search == None:
         search = 'bees'
@@ -228,8 +202,44 @@ async def gif(ctx, *, search: Optional[str]):
 
 
 # bot command to add author from availability list
+@bot.command(name='eventadd', aliases=['addevent', 'aevent', 'eventa'],
+             help='Add new event. (Server Owner role specific) (event DD-MM-YYYY-HH:MM)')
+# only very specific roles can use this command
+@commands.has_role(owner_specific_command_name)
+async def clash_add(ctx, date: Optional[str], *, event: Optional[str]):
+    try:
+        date_convert = datetime.strptime(date, '%d-%m-%Y-%H:%M')
+        if date_convert >= present:
+            # create new "clash_available.txt" if setting a "clash" event
+            if 'clash' in event:
+                new_clash_available_text = open("resource_files/clash_files/clash_available.txt", "w")
+
+            # open dictionary file
+            with open('resource_files/text_files/event_dictionary.txt') as f:
+                data = f.read()
+            date_dict = ast.literal_eval(data)
+            # date_dict = json.loads(data)
+            # add new event
+            date_dict[event] = date
+            # create new "event_dictionary.txt" files
+            new_event_dates_text = open("resource_files/text_files/event_dictionary.txt", "w")
+            # add the "date_dict" to "event_dictionary.txt" file
+            dates_file_a = open("resource_files/text_files/event_dictionary.txt", "a")
+            # convert date_dict to string
+            date_dict_to_str = json.dumps(date_dict)
+            # add the "date_dict" to "event_dictionary.txt" file
+            dates_file_a.write(date_dict_to_str)
+            dates_file_a.close()
+            await ctx.send('You added a new event! :smile:')
+        else:
+            await ctx.send('Invalid input! :flushed:')
+    except:
+        await ctx.send('Invalid input! :flushed:')
+
+
+# bot command to add author from availability list
 @bot.command(name='clashadd', aliases=['addclash', 'aclash', 'clasha', 'clashavailable'],
-             help='Add your clash availability!')
+             help='Add your clash availability! (Sat, Sun, or Both)')
 # only specific roles can use this command
 @commands.has_role(role_specific_command_name)
 async def clash_add(ctx, *, date: Optional[str]):
@@ -237,15 +247,13 @@ async def clash_add(ctx, *, date: Optional[str]):
         # available member for clash
         available_member = ctx.message.author
         if date == None:
-            await ctx.send('Please specify either \'Sat\' or \'Sun\' after command! :smile:')
+            await ctx.send('Please specify either \'Sat\', \'Sun\' or \'Both\' after command! :smile:')
         else:
-            # check if member is already in the "clash_available.txt" file
-            check = False
             # help case sensitivity
             date = date.lower()
             # if not sun or sat (the usual clash days)
-            if not date == 'sat' and not date == 'sun':
-                await ctx.send('Invalid input! :flushed: Please specify either \'Sat\' or \'Sun\' '
+            if not date == 'sat' and not date == 'sun' and not date == 'both':
+                await ctx.send('Invalid input! :flushed: Please specify either \'Sat\', \'Sun\' or \'Both\' '
                                'after command! :smile:')
             else:
                 # read the "clash_dates.txt" file and check if the given date >= present
@@ -254,31 +262,81 @@ async def clash_add(ctx, *, date: Optional[str]):
                 new_clash_date = clash_dates_file.readline()
                 clash_date_convert = datetime.strptime(new_clash_date, '%d-%m-%Y %H:%M')
                 if clash_date_convert >= present:
-                    # capitalize "Sun" and "Sat"
-                    date = date.capitalize()
-                    text_input = str(available_member.id) + date + ' : ' + str(available_member.display_name) + '\n'
-                    check_input = str(available_member.id) + date
-                    clash_available_file = open("resource_files/clash_files/clash_available.txt")
-                    check_txt = clash_available_file.readlines()
-                    # check if member is already in the "clash_available.txt" file
-                    for lines in check_txt:
-                        # look at only the id and date from "lines"
-                        only_id = re.sub("\D", "", lines)
-                        after_id = lines[len(only_id):]
-                        only_date = after_id[:3]
-                        # new line
-                        new_line = only_id + only_date
-                        if check_input == new_line:
-                            check = True
-                    # if member is already in the "clash_available.txt" file
-                    if check == True:
-                        await ctx.send('Your name was already added to the list for this day! :open_mouth:')
-                    # if member is NOT in the document, add them to the "clash_available.txt" file
+                    if not date == 'both':
+                        # check if member is already in the "clash_available.txt" file
+                        check = False
+                        # capitalize "Sun" or "Sat"
+                        date = date.capitalize()
+                        text_input = str(available_member.id) + date + ' : ' + str(available_member.display_name) + '\n'
+                        check_input = str(available_member.id) + date
+                        clash_available_file = open("resource_files/clash_files/clash_available.txt")
+                        check_txt = clash_available_file.readlines()
+                        # check if member is already in the "clash_available.txt" file
+                        for lines in check_txt:
+                            # look at only the id and date from "lines"
+                            only_id = re.sub("\D", "", lines)
+                            after_id = lines[len(only_id):]
+                            only_date = after_id[:3]
+                            # new line
+                            new_line = only_id + only_date
+                            if check_input == new_line:
+                                check = True
+                        # if member is already in the "clash_available.txt" file
+                        if check is True:
+                            await ctx.send('Your name was already added to the list for this day! :open_mouth:')
+                        # if member is NOT in the document, add them to the "clash_available.txt" file
+                        else:
+                            clash_available_file_a = open("resource_files/clash_files/clash_available.txt", "a")
+                            clash_available_file_a.write(text_input)
+                            clash_available_file_a.close()
+                            await ctx.send('Your availability has been added to the list! :white_check_mark:')
                     else:
-                        clash_available_file_a = open("resource_files/clash_files/clash_available.txt", "a")
-                        clash_available_file_a.write(text_input)
-                        clash_available_file_a.close()
-                        await ctx.send('Your availability has been added to the list! :white_check_mark:')
+                        date = 'Sat'
+                        # check specific days
+                        check_sat = False
+                        check_sun = False
+                        text_sat = str(available_member.id) + 'Sat' + ' : ' + str(available_member.display_name) + '\n'
+                        text_sun = str(available_member.id) + 'Sun' + ' : ' + str(available_member.display_name) + '\n'
+                        # check if sat and/or sun already exist
+                        for x in range(0, 2):
+                            check_input = str(available_member.id) + date
+                            clash_available_file = open("resource_files/clash_files/clash_available.txt")
+                            check_txt = clash_available_file.readlines()
+                            # check if member is already in the "clash_available.txt" file
+                            for lines in check_txt:
+                                # look at only the id and date from "lines"
+                                only_id = re.sub("\D", "", lines)
+                                after_id = lines[len(only_id):]
+                                only_date = after_id[:3]
+                                # new line
+                                new_line = only_id + only_date
+                                if check_input == new_line and date == 'Sat':
+                                    check_sat = True
+                                if check_input == new_line and date == 'Sun':
+                                    check_sun = True
+                            date = 'Sun'
+                        # if member is already in the "clash_available.txt" file
+                        if check_sat is True and check_sun is True:
+                            await ctx.send('Your name was already added to the list for these days! :open_mouth:')
+                        # if member is NOT in the document for SUN, add them to the "clash_available.txt" file
+                        elif check_sat is True and check_sun is False:
+                            clash_available_file_a = open("resource_files/clash_files/clash_available.txt", "a")
+                            clash_available_file_a.write(text_sun)
+                            clash_available_file_a.close()
+                            await ctx.send('Your availability has been added to the list! :white_check_mark:')
+                        # if member is NOT in the document for SAT, add them to the "clash_available.txt" file
+                        elif check_sat is False and check_sun is True:
+                            clash_available_file_a = open("resource_files/clash_files/clash_available.txt", "a")
+                            clash_available_file_a.write(text_sat)
+                            clash_available_file_a.close()
+                            await ctx.send('Your availability has been added to the list! :white_check_mark:')
+                        # if member is NOT in the document for BOTH, add them to the "clash_available.txt" file
+                        else:
+                            clash_available_file_a = open("resource_files/clash_files/clash_available.txt", "a")
+                            clash_available_file_a.write(text_sat)
+                            clash_available_file_a.write(text_sun)
+                            clash_available_file_a.close()
+                            await ctx.send('Your availability has been added to the list! :white_check_mark:')
     except:
         await ctx.send('There\'s currently no clash scheduled! :open_mouth: Try again next clash!')
 
@@ -400,7 +458,7 @@ async def clash_view(ctx):
 @bot.command(name='clashset', aliases=['setclash', 'sclash', 'clashs'],
              help='Set next clash. (Server Owner role specific) (DD-MM-YYYY HH:MM)')
 # only VERY specific roles can use this command
-@commands.has_role('Server Owner')
+@commands.has_role(owner_specific_command_name)
 async def clash_set(ctx, *, clash_date: Optional[str]):
     try:
         clash_date_convert = datetime.strptime(clash_date, '%d-%m-%Y %H:%M')
@@ -417,6 +475,17 @@ async def clash_set(ctx, *, clash_date: Optional[str]):
             await ctx.send('Invalid input! :flushed:')
     except:
         await ctx.send('Invalid input! :flushed:')
+
+
+# bot command to get clash spreadsheet
+@bot.command(name='spreadsheet', aliases=['clashsheet'],
+             help='Get clash spreadsheet. (Role specific)')
+# only specific roles can use this command
+@commands.has_role(role_specific_command_name)
+async def clash_set(ctx):
+    if os.path.isfile("resource_files/clash_files/clash_spreadsheet.txt"):
+        clash_ss_file = open("resource_files/clash_files/clash_spreadsheet.txt").readline()
+        await ctx.send('Here you go :smile:\n{}'.format(clash_ss_file))
 
 
 # bot command to add suggestions for BeeBot
@@ -593,46 +662,46 @@ async def split_team(ctx, number_of_teams: Optional[int]):
     players_array = []
     teams_array = []
     final_message = ''
-    try:
-        # set "number_of_teams" to 1 if none
-        if number_of_teams == None:
-            number_of_teams = 2
-        if number_of_teams <= max_teams or number_of_teams > 0:
-            # create a "players_array" for members in the voice channel
-            channel = ctx.message.author.voice.channel
-            for member in channel.members:
-                count_members += 1
-                user = member.display_name
-                players_array.append(user)
-            # randomize the elements of the array 1 to "count_members" times
-            for i in range(random.randint(1, count_members)):
-                random.shuffle(players_array)
+    # try:
+    # set "number_of_teams" to 1 if none
+    if number_of_teams == None:
+        number_of_teams = 2
+    if number_of_teams <= max_teams or number_of_teams > 0:
+        # create a "players_array" for members in the voice channel
+        channel = ctx.message.author.voice.channel
+        for member in channel.members:
+            count_members += 1
+            user = member.display_name
+            players_array.append(user)
+        # randomize the elements of the array 1 to "count_members" times
+        for i in range(random.randint(1, count_members)):
+            random.shuffle(players_array)
 
-            # split the teams into the number of teams
-            team_splitting = np.array_split(players_array, number_of_teams)
+        # split the teams into the number of teams
+        team_splitting = np.array_split(players_array, number_of_teams)
 
-            # create a "team_array" for the split teams
-            for i in range(len(team_splitting)):
-                # checking empty
-                # if team_splitting[i]:
-                quote_players = ''
-                for j in range(len(team_splitting[i])):
-                    if team_splitting[i][j]:
-                        quote_players = quote_players + '{}, '.format(team_splitting[i][j])
-                teams_array.append(quote_players)
+        # create a "team_array" for the split teams
+        for i in range(len(team_splitting)):
+            # checking empty
+            # if team_splitting[i]:
+            quote_players = ''
+            for j in range(len(team_splitting[i])):
+                if team_splitting[i][j]:
+                    quote_players = quote_players + '{}, '.format(team_splitting[i][j])
+            teams_array.append(quote_players)
 
-            # create a "final_message" with all the teams
-            for teams in range(len(teams_array)):
-                team_number += 1
-                # check if element is not empty
-                if teams_array[teams]:
-                    final_message = final_message + 'Team {} :  {}\n'.format(team_number, teams_array[teams][:-2])
+        # create a "final_message" with all the teams
+        for teams in range(len(teams_array)):
+            team_number += 1
+            # check if element is not empty
+            if teams_array[teams]:
+                final_message = final_message + 'Team {} :  {}\n'.format(team_number, teams_array[teams][:-2])
 
-            await ctx.send('The teams are : \n{}'.format(final_message))
-        else:
-            await ctx.send('An error has occurred! :confounded: Please try again!')
-    except:
+        await ctx.send('The teams are : \n{}'.format(final_message))
+    else:
         await ctx.send('An error has occurred! :confounded: Please try again!')
+    # except:
+    #     await ctx.send('An error has occurred! :confounded: Please try again!')
 
 
 # bot command to play Youtube Audio
@@ -728,7 +797,8 @@ async def leave(ctx):
         yt_current_file = open("resource_files/music_bot_files/yt_current.txt", "w")
         await ctx.send("Ok I'll leave. :cry:")
         voice.stop()
-        voice.disconnect()
+        server = ctx.message.guild.voice_client
+        await server.disconnect()
     else:
         await ctx.send("BeeBot is not connected to a voice channel. :thinking:")
 
@@ -961,11 +1031,11 @@ def download_next_song(ctx):
         yt_current_file.write(url)
 
         # create song file
-        song_there = os.path.isfile("resource_files/music_bot_files/next_song.mp3")
+        song_there = os.path.isfile("resource_files/music_bot_files/song.mp3")
         try:
             # remove "song.mp3" file
             if song_there:
-                os.remove("resource_files/music_bot_files/next_song.mp3")
+                os.remove("resource_files/music_bot_files/song.mp3")
         except PermissionError:
             print('Error has occurred in \"download_next_song\" function at song_there!')
 
